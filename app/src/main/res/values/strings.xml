@@ -1,0 +1,40 @@
+<resources>
+    <string name="app_name">Easy TuTi</string>
+    <string name="BTN_OK"> Đồng ý  </string>
+    <string name="BTN_CANCEL"> Hủy bỏ  </string>
+
+    <string name="ACTION_EAT"> Ăn  </string>
+    <string name="ACTION_SLEEP"> Ngủ  </string>
+    <string name="ACTION_RELAX"> Chơi đùa  </string>
+    <string name="ACTION_CRY"> Quấy khóc  </string>
+    <string name="ACTION_TAKE_BATH"> Tắm mát  </string>
+
+    <string name="NO_ACTION_RECORDED">Chưa có hoạt động nào được ghi nhận</string>
+    <string name="ACTION_IN_PAST">Kéo dài trong %1$s</string>
+    <string name="ACTION_START_ON"> Hoạt động đã bắt đầu từ %1$s</string>
+    <string name="ACTION_TIME_INVALID"> Thời gian bắt đầu / kết thúc không hợp lệ! </string>
+    <string name="ACTION_ADDED"> Đã thêm hoạt động: %1$s</string>
+    <string name="NOTICE_PLEASE_WAIT"> Đang đồng bộ, vui lòng đợi trong giây lát... </string>
+    <string name="NO_DESCRIPTION"> Không có mô tả </string>
+    <string name="CHOOSE_ACTION"> "Chọn một hoạt động của con:"</string>
+    <string name="INSERT_ACTION"> Chạm để thêm hoạt động mới </string>
+    <string name="DELETE_ACTION_CONFIRM"> Xóa hoạt động? </string>
+    <string name="MODIFY_ACTION"> Sửa lại hoạt động  </string>
+
+    <string name="FILE_CREATED"> Đã tạo một file mới:  %1$s</string>
+    <string name="FILE_CREATED_ERROR"> Không thể tạo file mới:  %1$s</string>
+
+    <string name="DOWNLOAD_UPDATE_TITLE"> Tải về bản cập nhật của phần mềm </string>
+    <string name="DOWNLOAD_UPDATE_DESCRIPTION"> Easy TuTi </string>
+
+    <string name="DATE_AND_TIME"> %1$s ngày %2$s</string>
+
+    <string name="MENU_OPTION"> Tùy chọn  </string>
+
+    <string name="OPTION_VIEW_CHART"> Xem thống kê</string>
+    <string name="OPTION_SYNC_DATA"> Đồng bộ dữ liệu</string>
+    <string name="OPTION_STATISTIC_ALL"> Hiển thị tất cả dữ liệu</string>
+    <string name="OPTION_STATISTIC_TODAY"> Chỉ hiển thị trong hôm nay</string>
+    <string name="OPTION_CHECK_UPDATE"> Kiểm tra cập nhật phần mềm</string>
+
+</resources>

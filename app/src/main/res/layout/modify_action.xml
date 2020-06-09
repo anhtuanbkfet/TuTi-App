@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="15dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight=".4"
+            android:text="Tên hoạt động:" />
+
+        <Spinner
+            android:id="@+id/spnAction"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight=".6" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight=".4"
+            android:text="Thời gian bắt đầu:" />
+
+        <EditText
+            android:id="@+id/et_timeStart"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight=".6"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:inputType="datetime" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight=".4"
+            android:text="Thời gian kết thúc:" />
+
+        <EditText
+            android:id="@+id/et_timeEnd"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight=".6"
+            android:focusable="true"
+            android:focusableInTouchMode="false"
+            android:inputType="datetime" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+        <TextView
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight=".4"
+            android:text="Ghi chú:" />
+
+        <EditText
+            android:id="@+id/et_description"
+            android:layout_width="0dip"
+            android:layout_height="wrap_content"
+            android:layout_weight=".6" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="right"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="0dp"
+            android:text="Hủy bỏ" />
+
+        <Button
+            android:id="@+id/btn_modify"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:text="Ok" />
+
+    </LinearLayout>
+
+</LinearLayout>

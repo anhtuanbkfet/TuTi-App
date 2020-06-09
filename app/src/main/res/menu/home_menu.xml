@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/option_view_chart"
+        app:showAsAction="collapseActionView"
+        android:checkable="false"
+        android:icon="@android:drawable/ic_lock_silent_mode"
+        android:title="@string/OPTION_VIEW_CHART" />
+    <item
+        android:id="@+id/option_statistic_mode"
+        app:showAsAction="collapseActionView"
+        android:checkable="false"
+        android:icon="@android:drawable/ic_lock_silent_mode"
+        android:title="@string/OPTION_STATISTIC_ALL" />
+    <item
+        android:id="@+id/option_sync_data"
+        app:showAsAction="collapseActionView"
+        android:checkable="false"
+        android:icon="@android:drawable/ic_lock_silent_mode"
+        android:title="@string/OPTION_SYNC_DATA" />
+
+    <item
+        android:id="@+id/option_check_update"
+        app:showAsAction="collapseActionView"
+        android:checkable="false"
+        android:icon="@android:drawable/ic_lock_silent_mode"
+        android:title="@string/OPTION_CHECK_UPDATE" />
+</menu>
