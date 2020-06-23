@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Formatter;
 
 
 public class Utils {
@@ -276,5 +277,27 @@ public class Utils {
                 Toast.makeText(context, toast, Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    public static String getSettingValueFromFile( String fileName, String strField) {
+        String strJson = Utils.readFileFromAppDataFolder("app_setting.json");
+        JSON jRoot = new JSON(strJson);
+        //Load data from json file:
+        String settingValue = jRoot.key(strField).stringValue();
+        if (settingValue.equals(""))
+            return "unknown";
+        else
+            return settingValue;
+    }
+
+    public static boolean updateSettingFile( String fileName, String strField, String strValue) {
+        String strJson = Utils.readFileFromAppDataFolder(fileName);
+        JSON jRoot = new JSON(strJson);
+        JSON target = jRoot.key(strField);
+        if (target != null)
+            jRoot.remove(target);
+        jRoot.addEditWithKey(strField, strValue);
+        //Save to file:
+        return Utils.saveFileToAppDataFolder(fileName, jRoot.toString());
     }
 }

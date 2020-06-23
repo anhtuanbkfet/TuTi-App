@@ -1,6 +1,7 @@
 package com.example.tuti;
 
 import android.os.Bundle;
+import android.os.Handler;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MenuItem;
@@ -36,6 +37,7 @@ public class SumaryActivity extends AppCompatActivity {
     private int m_year = 0, m_month = 0, m_date = 0;
 
     PieChart m_chart;
+    private static final String m_settingFileName = "app_setting.json";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +89,29 @@ public class SumaryActivity extends AppCompatActivity {
         });
 
         showSumary(m_year, m_month, m_date);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        //Get back data if needed:
+        String strMode = Utils.getSettingValueFromFile(m_settingFileName, "statistic_mode");
+        if (!strMode.equals("All")) {
+            WebServerConnect webService = new WebServerConnect();
+            webService.setWebServerCallback(new WebServerCallback() {
+                @Override
+                public void OnWebServerResposed() {
+                    //Do nothing
+                }
+
+                @Override
+                public boolean OnRequestDownloadApk(String linkFile) {
+                    return false;
+                }
+            });
+            webService.syncWithServer(StatisticMode.Today); //get today data only
+        }
     }
 
     @Override

@@ -106,7 +106,7 @@ public class TimelineViewAdapter extends ArrayAdapter<TimelineRow> {
         }
 
         if (currentRow.getType() < 0 || position == RowDataList.size() - 1)
-            rowDuration.setText(res.getString(R.string.INSERT_ACTION));
+            rowDuration.setText(res.getString(R.string.INSERT_NEW_ACTION));
         else {
             rowDuration.setText(res.getString(R.string.ACTION_IN_PAST, getPastTime(currentRow.getTimeBegin(), currentRow.getTimeEnd())));
             if (currentRow.getDescription() == null)

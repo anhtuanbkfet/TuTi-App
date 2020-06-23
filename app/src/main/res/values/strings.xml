@@ -17,9 +17,12 @@
     <string name="NOTICE_PLEASE_WAIT"> Đang đồng bộ, vui lòng đợi trong giây lát... </string>
     <string name="NO_DESCRIPTION"> Không có mô tả </string>
     <string name="CHOOSE_ACTION"> "Chọn một hoạt động của con:"</string>
-    <string name="INSERT_ACTION"> Chạm để thêm hoạt động mới </string>
+    <string name="CHOOSE_ACTION_TO_INSERT"> "Chèn thêm một hoạt động:"</string>
+    <string name="INSERT_ACTION"> Chèn thêm hoạt động </string>
+    <string name="INSERT_NEW_ACTION"> Chèn thêm hoạt động </string>
     <string name="DELETE_ACTION_CONFIRM"> Xóa hoạt động? </string>
     <string name="MODIFY_ACTION"> Sửa lại hoạt động  </string>
+    <string name="DELETE_ACTION"> Xóa hoạt động  </string>
 
     <string name="FILE_CREATED"> Đã tạo một file mới:  %1$s</string>
     <string name="FILE_CREATED_ERROR"> Không thể tạo file mới:  %1$s</string>

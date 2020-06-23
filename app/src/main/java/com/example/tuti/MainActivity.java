@@ -1,11 +1,8 @@
 package com.example.tuti;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.FileProvider;
 
-import android.Manifest;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
@@ -14,52 +11,44 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
-import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import org.joda.time.DateTime;
 import org.json.JSONException;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "TuTi";
-    private static final String m_fileName = "data_storage.json";
+    private static final String m_dataFileName = "data_storage.json";
+    private static final String m_settingFileName = "app_setting.json";
     private Resources res;
     private static Context mContext;
     private DownloadManager m_downloadManager;
 
     private AlertDialog m_actionsDialog;
     private AlertDialog m_actionModifyDialog;
-    private int m_lastActionType = -1;
     private Boolean m_isDialogShow = false;
     private int m_lastActionID = 0;
 
@@ -67,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private ListView m_ListView;
     private ArrayList<TimelineRow> m_timelineRowsList = new ArrayList<TimelineRow>();
     private JSON m_jActionList = new JSON(null);
-    private int m_statisticViewMode = 1; //0: all; 1: only today
+    private StatisticMode m_statisticViewMode = StatisticMode.Today; //0: all; 1: only today
 
 
     public static Context getMainActivityContext() {
@@ -87,7 +76,19 @@ public class MainActivity extends AppCompatActivity {
         getSupportActionBar().setDisplayUseLogoEnabled(true);
 
         createTimeLine();
-        createJsonDataFile(m_fileName);
+        createJsonDataFile(m_dataFileName);
+        createJsonDataFile(m_settingFileName);
+
+        String strMode = Utils.getSettingValueFromFile(m_settingFileName, "statistic_mode");
+        if (strMode.equals("All")) {
+            m_statisticViewMode = StatisticMode.All;
+
+        } else{
+            m_statisticViewMode = StatisticMode.Today;
+            Utils.updateSettingFile(m_settingFileName, "statistic_mode", "Today");
+        }
+
+
         //Sync with server:
         WebServerConnect webService = new WebServerConnect();
         webService.setWebServerCallback(new WebServerCallback() {
@@ -98,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         //Update listView:
-                        loadJsonData(m_fileName);
+                        loadJsonData(m_dataFileName);
                         updateListViewFromJsonList(m_jActionList);
                     }
                 };
@@ -110,9 +111,9 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
-        webService.syncWithServer();
+        webService.syncWithServer(m_statisticViewMode);
 
-        loadJsonData(m_fileName);
+        loadJsonData(m_dataFileName);
         updateListViewFromJsonList(m_jActionList);
 
         //Download manager:
@@ -126,14 +127,47 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        MenuItem item = menu.findItem(R.id.option_statistic_mode);
+        if (m_statisticViewMode == StatisticMode.All) {
+            item.setTitle(res.getString(R.string.OPTION_STATISTIC_TODAY));
+        } else {
+            item.setTitle(res.getString(R.string.OPTION_STATISTIC_ALL));
+        }
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
                 onBackPressed();
                 return true;
             case R.id.option_view_chart: {
-                Intent intent = new Intent(MainActivity.this, SumaryActivity.class);
-                startActivity(intent);
+
+                //Get data if needed:
+                String strMode = Utils.getSettingValueFromFile(m_settingFileName, "statistic_mode");
+                if (!strMode.equals("All")) {
+                    WebServerConnect webService = new WebServerConnect();
+                    webService.setWebServerCallback(new WebServerCallback() {
+                        @Override
+                        public void OnWebServerResposed() {
+                            Intent intent = new Intent(MainActivity.this, SumaryActivity.class);
+                            startActivity(intent);
+                        }
+
+                        @Override
+                        public boolean OnRequestDownloadApk(String linkFile) {
+                            return false;
+                        }
+                    });
+                    webService.syncWithServer(StatisticMode.All); //get all data
+                }
+                else{
+                    Intent intent = new Intent(MainActivity.this, SumaryActivity.class);
+                    startActivity(intent);
+                }
+
             }
             break;
             case R.id.option_sync_data: {
@@ -147,7 +181,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 //Update listView:
-                                loadJsonData(m_fileName);
+                                loadJsonData(m_dataFileName);
                                 updateListViewFromJsonList(m_jActionList);
                             }
                         };
@@ -159,7 +193,7 @@ public class MainActivity extends AppCompatActivity {
                         return false;
                     }
                 });
-                webService.syncWithServer();
+                webService.syncWithServer(m_statisticViewMode);
             }
             break;
             case R.id.option_check_update: {
@@ -215,13 +249,15 @@ public class MainActivity extends AppCompatActivity {
                 //Menu change statistic mode
                 if (item.getTitle().equals(res.getString(R.string.OPTION_STATISTIC_ALL))) {
                     item.setTitle(res.getString(R.string.OPTION_STATISTIC_TODAY));
-                    m_statisticViewMode = 0;
+                    m_statisticViewMode = StatisticMode.All;
                 } else {
                     item.setTitle(res.getString(R.string.OPTION_STATISTIC_ALL));
-                    m_statisticViewMode = 1;
+                    m_statisticViewMode = StatisticMode.Today;
                 }
-                //Sen request to server:
 
+                Utils.updateSettingFile(m_settingFileName, "statistic_mode", m_statisticViewMode == StatisticMode.All?"All":"Today");
+
+                //Sen request to server:
                 WebServerConnect webService = new WebServerConnect();
                 webService.setWebServerCallback(new WebServerCallback() {
                     @Override
@@ -231,7 +267,7 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {
                                 //Update listView:
-                                loadJsonData(m_fileName);
+                                loadJsonData(m_dataFileName);
                                 updateListViewFromJsonList(m_jActionList);
                             }
                         };
@@ -243,7 +279,7 @@ public class MainActivity extends AppCompatActivity {
                         return false;
                     }
                 });
-                webService.changeStatisticMode(m_statisticViewMode);
+                webService.syncWithServer(m_statisticViewMode);
 
             }
             break;
@@ -254,13 +290,6 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    private void deleteJsonFile(String fileName) {
-        Context context = MainActivity.this;
-        String path = context.getFilesDir().getAbsolutePath() + "/" + fileName;
-        File file = new File(path);
-        if (file.exists())
-            file.delete();
-    }
 
     private void updateListViewFromJsonList(JSON jActionList) {
         m_timelineRowsList.clear();
@@ -269,10 +298,7 @@ public class MainActivity extends AppCompatActivity {
             insertNewActionToListView(makeActionRow(m_lastActionID, -1, -1, -1, null));
         else {
             for (int i = 0; i < jActionList.count(); i++) {
-
                 JSON current_action = jActionList.index(i);
-
-
                 int actionID = current_action.key("action_id").intValue();
                 int actionType = current_action.key("action_type").intValue();
                 long timeStart = current_action.key("time_start").longValue();
@@ -297,31 +323,6 @@ public class MainActivity extends AppCompatActivity {
             m_lastActionID = m_jActionList.index(m_jActionList.count() - 1).key("action_id").intValue();
     }
 
-    private boolean insertNewActionToJsonFile(int actionID, int actionType, long timeStart, String strDescription) {
-        JSON jAction = JSON.create(JSON.create(JSON.dic(
-                "action_id", actionID,
-                "action_type", actionType,
-                "time_start", timeStart,
-                "description", strDescription == null ? "" : strDescription
-        )));
-
-        m_jActionList.add(jAction);
-
-        JSON jRecordDaily = JSON.create("{}");
-        if (m_jActionList.count() == 0)
-            jRecordDaily.addEditWithKey("action_list", JSON.array(jAction));
-        else
-            jRecordDaily.addEditWithKey("action_list", m_jActionList);
-
-        //Save to file:
-        boolean ret = saveJActionListToFile(m_jActionList);
-        updateListViewFromJsonList(m_jActionList);
-
-        Log.i(TAG, "insertNewActionToJsonFile, actionID: " + actionID + " " + Utils.getActionName(actionType) + " time_start: " + String.valueOf(timeStart));
-
-        return ret;
-    }
-
     private void createJsonDataFile(String fileName) {
         boolean isExist = Utils.isFileOnAppDataFolderExist(fileName);
         if (!isExist) {
@@ -338,13 +339,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean saveJActionListToFile(JSON jActionList) {
-        JSON jRecordDaily = JSON.create("{}");
-        jRecordDaily.addEditWithKey("time_record", new Date().getTime());
-        jRecordDaily.addEditWithKey("action_list", jActionList);
-        //Save to file:
-        return Utils.saveFileToAppDataFolder(m_fileName, jRecordDaily.toString());
-    }
 
     int getBellowLineSize(long timeStart, long timeEnd) {
         long size = 1;
@@ -377,36 +371,6 @@ public class MainActivity extends AppCompatActivity {
         return myRow;
     }
 
-    private void deleteLastAction() {
-        if (m_jActionList.count() > 0) {
-
-            JSON jAction = m_jActionList.index(m_jActionList.count() - 1);
-            //Submit to server:
-            WebServerConnect webService = new WebServerConnect();
-            webService.setWebServerCallback(new WebServerCallback() {
-                @Override
-                public void OnWebServerResposed() {
-                    Handler mainHandler = new Handler(MainActivity.this.getMainLooper());
-                    Runnable myRunnable = new Runnable() {
-                        @Override
-                        public void run() {
-                            //Update listView:
-                            loadJsonData(m_fileName);
-                            updateListViewFromJsonList(m_jActionList);
-                        }
-                    };
-                    mainHandler.post(myRunnable);
-                }
-
-                @Override
-                public boolean OnRequestDownloadApk(String linkFile) {
-                    return false;
-                }
-            });
-            webService.sendActionRequest("DELETE_ACTION", jAction.key("action_id").intValue(), 0, 0, null, 0);
-        }
-    }
-
     private void insertNewActionToListView(TimelineRow item) {
 
         m_timelineRowsList.add(item);
@@ -425,56 +389,64 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position,
                                     long id) {
                 if (position == m_timelineRowsList.size() - 1)
-                    displayAlertDialog();
+                    insertNewActionDialog();
             }
         });
         m_ListView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                if (position == m_timelineRowsList.size() - 1) {
-                    //Delete last action:
-                    AlertDialog.Builder deleteArletDialog = new AlertDialog.Builder(MainActivity.this);
-                    deleteArletDialog.setMessage(res.getString(R.string.DELETE_ACTION_CONFIRM));
-                    deleteArletDialog.setCancelable(true);
+                PopupMenu popup = new PopupMenu(getMainActivityContext(), view);
+                MenuInflater inflater = popup.getMenuInflater();
+                inflater.inflate(R.menu.actions_menu, popup.getMenu());
+                popup.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+                    @Override
+                    public boolean onMenuItemClick(MenuItem item) {
+                        switch (item.getItemId()) {
+                            case R.id.pmnuEdit:
+                                displayModifyActionDialog(position, 0);
+                                break;
+                            case R.id.pmnuInsert: {
+                                JSON jAction = m_jActionList.index(position);
+                                displayModifyActionDialog(position, 1);
+                                break;
+                            }
+                            case R.id.pmnuDelete: {
+                                //Delete last action:
+                                AlertDialog.Builder deleteArletDialog = new AlertDialog.Builder(MainActivity.this);
+                                deleteArletDialog.setMessage(res.getString(R.string.DELETE_ACTION_CONFIRM));
+                                deleteArletDialog.setCancelable(true);
 
-                    deleteArletDialog.setPositiveButton(
-                            res.getString(R.string.BTN_OK),
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    deleteLastAction();
-                                }
-                            });
+                                deleteArletDialog.setPositiveButton(
+                                        res.getString(R.string.BTN_OK),
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                deleteAction(position);
+                                            }
+                                        });
 
-                    deleteArletDialog.setNegativeButton(
-                            res.getString(R.string.BTN_CANCEL),
-                            new DialogInterface.OnClickListener() {
-                                public void onClick(DialogInterface dialog, int id) {
-                                    dialog.cancel();
-                                }
-                            });
+                                deleteArletDialog.setNegativeButton(
+                                        res.getString(R.string.BTN_CANCEL),
+                                        new DialogInterface.OnClickListener() {
+                                            public void onClick(DialogInterface dialog, int id) {
+                                                dialog.cancel();
+                                            }
+                                        });
 
-                    AlertDialog alert11 = deleteArletDialog.create();
-                    deleteArletDialog.show();
-                } else {
-                    displayModifyActionDialog(position);
-                }
+                                AlertDialog alert11 = deleteArletDialog.create();
+                                deleteArletDialog.show();
+                                break;
+                            }
+                        }
+                        return false;
+                    }
+                });
+                popup.show();
                 return true;
             }
         });
     }
 
-    private void insertNewAction(int actionType) {
-        if (m_lastActionType < 0)
-            m_timelineRowsList.clear();
-        m_lastActionType = actionType;
-
-        if (m_isDialogShow) {
-            m_isDialogShow = false;
-            m_actionsDialog.dismiss();
-        }
-
-        //Modify last action:
-        long lastActionTime = new Date().getTime();
+    private void insertNewAction(int actionType, long timeStart, String strDescription, int insertTo) {
         //Submit to server:
         WebServerConnect webService = new WebServerConnect();
         webService.setWebServerCallback(new WebServerCallback() {
@@ -485,7 +457,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         //Update listView:
-                        loadJsonData(m_fileName);
+                        loadJsonData(m_dataFileName);
                         updateListViewFromJsonList(m_jActionList);
                     }
                 };
@@ -497,8 +469,21 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
         });
-        webService.sendActionRequest("NEW_ACTION", 0, actionType, lastActionTime, null, 0);
+        if (strDescription == null)
+            strDescription = "";
+        webService.sendActionRequest("INSERT_ACTION", 0, actionType, timeStart, strDescription, insertTo);
         //Toast.makeText(MainActivity.this, res.getString(R.string.ACTION_ADDED, Utils.getActionName(actionType)), Toast.LENGTH_SHORT).show();
+    }
+
+    private void insertNewAction(int actionType) {
+
+        if (m_isDialogShow) {
+            m_isDialogShow = false;
+            m_actionsDialog.dismiss();
+        }
+        //Modify last action:
+        long actionTime = new Date().getTime();
+        insertNewAction(actionType, actionTime, "", 0);
     }
 
     private void showDateTimePickerDialog(EditText targetEditText) {
@@ -513,10 +498,40 @@ public class MainActivity extends AppCompatActivity {
         dateTimePicker.dateTimePickDialog(targetEditText);
     }
 
+    void deleteAction(int position) {
+        JSON jAction = m_jActionList.index(position);
+
+        //Submit to server:
+        WebServerConnect webService = new WebServerConnect();
+        webService.setWebServerCallback(new WebServerCallback() {
+            @Override
+            public void OnWebServerResposed() {
+                Handler mainHandler = new Handler(MainActivity.this.getMainLooper());
+                Runnable myRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        //Update listView:
+                        loadJsonData(m_dataFileName);
+                        updateListViewFromJsonList(m_jActionList);
+                    }
+                };
+                mainHandler.post(myRunnable);
+            }
+
+            @Override
+            public boolean OnRequestDownloadApk(String linkFile) {
+                return false;
+            }
+        });
+        webService.sendActionRequest("DELETE_ACTION", jAction.key("action_id").intValue(), 0, 0, null, 0);
+    }
+
     /*
-    position: selected index
+    - position: selected index
+    - mode:   0: modify
+            1: insert
      */
-    public void displayModifyActionDialog(int position) {
+    public void displayModifyActionDialog(int position, int modifyMode) {
         LayoutInflater inflater = getLayoutInflater();
         View modifyActionLayout = inflater.inflate(R.layout.modify_action, null);
 
@@ -524,7 +539,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         final EditText tvTimeStart = (EditText) modifyActionLayout.findViewById(R.id.et_timeStart);
-        final EditText tvTimeEnd = (EditText) modifyActionLayout.findViewById(R.id.et_timeEnd);
+//        final EditText tvTimeEnd = (EditText) modifyActionLayout.findViewById(R.id.et_timeEnd);
         final EditText tvDescription = (EditText) modifyActionLayout.findViewById(R.id.et_description);
         final Spinner spnAction = (Spinner) modifyActionLayout.findViewById(R.id.spnAction);
         final Button btnModify = (Button) modifyActionLayout.findViewById(R.id.btn_modify);
@@ -540,13 +555,13 @@ public class MainActivity extends AppCompatActivity {
         String strTimeStart = res.getString(R.string.DATE_AND_TIME,
                 (String) android.text.format.DateFormat.format(" HH:mm", new Date(timeStart)),
                 (String) android.text.format.DateFormat.format("dd/MM/yyyy", new Date(timeStart)));
-        String strTimeEnd = res.getString(R.string.DATE_AND_TIME,
-                (String) android.text.format.DateFormat.format(" HH:mm", new Date(timeEnd)),
-                (String) android.text.format.DateFormat.format("dd/MM/yyyy", new Date(timeEnd)));
+//        String strTimeEnd = res.getString(R.string.DATE_AND_TIME,
+//                (String) android.text.format.DateFormat.format(" HH:mm", new Date(timeEnd)),
+//                (String) android.text.format.DateFormat.format("dd/MM/yyyy", new Date(timeEnd)));
         String strDes = curAction.getDescription();
 
         tvTimeStart.setText(strTimeStart);
-        tvTimeEnd.setText(strTimeEnd);
+//        tvTimeEnd.setText(strTimeEnd);
         tvDescription.setText(strDes);
 
         List<String> actionList = new ArrayList<String>();
@@ -567,29 +582,34 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        tvTimeEnd.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                showDateTimePickerDialog(tvTimeEnd);
-            }
-        });
+//        tvTimeEnd.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                showDateTimePickerDialog(tvTimeEnd);
+//            }
+//        });
 
         btnModify.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 long timeStart = Utils.getTimeFromString(tvTimeStart.getText().toString());
-                long timeEnd = Utils.getTimeFromString(tvTimeEnd.getText().toString());
+//                long timeEnd = Utils.getTimeFromString(tvTimeEnd.getText().toString());
                 String strDes = tvDescription.getText().toString();
-                if (timeStart < timeEnd) {
-                    try {
-                        modifyAction(curAction.getId(), (int) spnAction.getSelectedItemId(), timeStart, timeEnd, strDes);
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+
+                try {
+                    if (modifyMode == 0) {
+                        //Modify action
+                        modifyAction(curAction.getId(), (int) spnAction.getSelectedItemId(), timeStart, strDes);
+                    } else {
+                        //insert new action:
+                        insertNewAction((int) spnAction.getSelectedItemId(), timeStart, strDes, curAction.getId());
                     }
-                    m_actionModifyDialog.dismiss();
-                } else {
-                    Toast.makeText(MainActivity.this, res.getString(R.string.ACTION_TIME_INVALID), Toast.LENGTH_SHORT).show();
+
+                } catch (JSONException e) {
+                    e.printStackTrace();
                 }
+                m_actionModifyDialog.dismiss();
+
             }
         });
 
@@ -599,8 +619,10 @@ public class MainActivity extends AppCompatActivity {
                 m_actionModifyDialog.dismiss();
             }
         });
-
-        alert.setTitle(res.getString(R.string.MODIFY_ACTION));
+        if (modifyMode == 0)
+            alert.setTitle(res.getString(R.string.MODIFY_ACTION));
+        else
+            alert.setTitle(res.getString(R.string.CHOOSE_ACTION_TO_INSERT));
         alert.setView(modifyActionLayout);
         alert.setCancelable(true);
 
@@ -608,7 +630,7 @@ public class MainActivity extends AppCompatActivity {
         m_actionModifyDialog.show();
     }
 
-    private void modifyAction(int actionID, int actionType, long timeStart, long timeEnd, String strDescription) throws JSONException {
+    private void modifyAction(int actionID, int actionType, long timeStart, String strDescription) throws JSONException {
         //sync to server:
         WebServerConnect webService = new WebServerConnect();
         webService.setWebServerCallback(new WebServerCallback() {
@@ -619,7 +641,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         //Update listView:
-                        loadJsonData(m_fileName);
+                        loadJsonData(m_dataFileName);
                         updateListViewFromJsonList(m_jActionList);
                     }
                 };
@@ -634,7 +656,7 @@ public class MainActivity extends AppCompatActivity {
         webService.sendActionRequest("MODIFY_ACTION", actionID, actionType, timeStart, strDescription, 0);
     }
 
-    public void displayAlertDialog() {
+    public void insertNewActionDialog() {
         LayoutInflater inflater = getLayoutInflater();
         View alertLayout = inflater.inflate(R.layout.choose_action, null);
 

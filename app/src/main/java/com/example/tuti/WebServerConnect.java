@@ -48,12 +48,11 @@ public class WebServerConnect {
 
     WebServerCallback callback = null;
     AlertDialog loadingDialog = null;
-    int m_statisticViewMode = 1; //0: all; 1: today; 2: from_to
+
 
     public void setWebServerCallback(WebServerCallback callback) {
         this.callback = callback;
     }
-
 
     public void checkUpdateWithServer() {
         final String postUrl = "https://tuti-webserver.herokuapp.com/update";
@@ -159,7 +158,7 @@ public class WebServerConnect {
      id, type, timeStart, strDes
      insert_to: default: 0
      */
-    public void sendActionRequest(String strRequest, int id, int type, long timeStart, String strDes, int insertTo) {
+    public void sendActionRequest(String strRequest, int actionId, int actionType, long timeStart, String strDes, int insertTo) {
         final String postUrl = "https://tuti-webserver.herokuapp.com/sync-with-server";
         Formatter strFormat = new Formatter();
         strFormat.format("{ \"client\": \"tuan.na3\", " +
@@ -170,7 +169,7 @@ public class WebServerConnect {
                 "\"action_type\": %d, " +
                 "\"time_start\": %d, " +
                 "\"description\": \"%s\", " +
-                "\"insert_to\": %d } }", strRequest, id, type, timeStart, strDes == null ? "" : strDes, insertTo);
+                "\"insert_to\": %d } }", strRequest, actionId, actionType, timeStart, strDes == null ? "" : strDes, insertTo);
 
         String strJson = strFormat.toString();
         Log.i(TAG, strJson);
@@ -212,7 +211,7 @@ public class WebServerConnect {
         loadingDialog.show();
     }
 
-    public void syncWithServer() {
+    public void syncWithServer(StatisticMode statisticViewMode) {
         final String postUrl = "https://tuti-webserver.herokuapp.com/sync-with-server";
         String strLocalJson = Utils.readFileFromAppDataFolder("data_storage.json");
         long nVer = 0;
@@ -225,7 +224,7 @@ public class WebServerConnect {
         Formatter strFormat = new Formatter();
         strFormat.format("{ \"client\": \"tuan.na3\", " +
                 "\"REQUEST\": \"GET_SYNC_DATA\", " +
-                "\"DATA\": {\"time_record\": %d,\"user_id\": 0, \"statistic_mode\": %d, \"time_from\": %d, \"time_to\": %d} }", nVer, m_statisticViewMode, 0, 0);
+                "\"DATA\": {\"time_record\": %d,\"user_id\": 0, \"statistic_mode\": %d, \"time_from\": %d, \"time_to\": %d} }", nVer, statisticViewMode == StatisticMode.All ? 0 : 1, 0, 0);
         String strJson = strFormat.toString();
         Log.i(TAG, strJson);
         Thread thread = new Thread() {
@@ -328,14 +327,5 @@ public class WebServerConnect {
         builder.setView(R.layout.loading_dialog);
         AlertDialog dialog = builder.create();
         return dialog;
-    }
-
-    /*
-    statistic mode: 1: today
-                    0: all
-     */
-    public void changeStatisticMode(int statisticViewMode) {
-        m_statisticViewMode = statisticViewMode;
-        syncWithServer();
     }
 }

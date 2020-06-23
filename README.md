@@ -1,2 +1,2 @@
-# TuTi-App
-An android application for my son who named TuTi
+Android app to record log of a baby timeline
+web-service: heroku

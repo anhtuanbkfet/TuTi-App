@@ -47,27 +47,27 @@
             android:inputType="datetime" />
     </LinearLayout>
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:orientation="horizontal">
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:gravity="center_vertical"-->
+<!--        android:orientation="horizontal">-->
 
-        <TextView
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight=".4"
-            android:text="Thời gian kết thúc:" />
+<!--        <TextView-->
+<!--            android:layout_width="0dip"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_weight=".4"-->
+<!--            android:text="Thời gian kết thúc:" />-->
 
-        <EditText
-            android:id="@+id/et_timeEnd"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight=".6"
-            android:focusable="true"
-            android:focusableInTouchMode="false"
-            android:inputType="datetime" />
-    </LinearLayout>
+<!--        <EditText-->
+<!--            android:id="@+id/et_timeEnd"-->
+<!--            android:layout_width="0dip"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_weight=".6"-->
+<!--            android:focusable="true"-->
+<!--            android:focusableInTouchMode="false"-->
+<!--            android:inputType="datetime" />-->
+<!--    </LinearLayout>-->
 
     <LinearLayout
         android:layout_width="match_parent"
